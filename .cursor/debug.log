@@ -199,3 +199,6 @@
 2026-02-13T11:20:04.596Z - INFO - unpack_readings_json started
 2026-02-13T11:20:04.603Z - INFO - unpack_readings_json - list count=0
 2026-02-13T11:20:04.606Z - INFO - unpack_readings_json empty
+2026-02-13T11:24:23.957Z - INFO - processAsyncCSVParseTasks type= doBackgroundProcessing=true
+2026-02-13T11:24:23.964Z - INFO - processAsyncCSVParseTasks tasksFound=0
+2026-02-13T11:24:23.965Z - INFO - processAsyncCSVParseTasks: No tasks found to process for type=
