@@ -87,7 +87,7 @@ WS_URL=wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID
 WS_AUTH=username:password
 ```
 
-Add `.env` to `.gitignore` so credentials are never committed. A `.env.example` template is included in the repo.
+Add `.env` to `.gitignore` so credentials are never committed. A `.env.example` template is included in the repo. When cloning this repo for development, `.cursor/mcp.json` is also gitignored so local config stays private.
 
 ### Using environment variables
 
@@ -176,37 +176,73 @@ Configure the WebSocket URL and credentials in `mcp.json` so Cursor spawns the s
 1. Open **Cursor Settings** → **Features** → **MCP**.
 2. Add to your `mcp.json` (project: `.cursor/mcp.json` or global: `~/.cursor/mcp.json`).
 
-**Using npx** (no clone needed):
+**Using npx** (no install, NPM package):
 
 ```json
-"helium-logs": {
-  "command": "npx",
-  "args": ["-y", "helium-rapid-websocket-mcp"],
-  "env": {
-    "MCP_TRANSPORT": "stdio",
-    "WS_URL": "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID",
-    "WS_USER": "${env:HELIUM_USER}",
-    "WS_PASSWORD": "${env:HELIUM_PASSWORD}"
-  },
-  "envFile": "${workspaceFolder}/.env"
+{
+  "mcpServers": {
+    "helium-logs": {
+      "command": "npx",
+      "args": ["-y", "helium-rapid-websocket-mcp"],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "WS_URL": "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID",
+        "WS_USER": "${env:HELIUM_USER}",
+        "WS_PASSWORD": "${env:HELIUM_PASSWORD}",
+        "OUTPUT_TO_CURSOR_DEBUG_LOG": "true",
+        "DEBUG_LOG_FILE": "${workspaceFolder}/.cursor/debug.log"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    }
+  }
 }
 ```
 
-**Using a local clone:**
+**Using installed NPM package:**
 
 ```json
-"helium-logs": {
-  "command": "node",
-  "args": ["${workspaceFolder}/node_modules/helium-rapid-websocket-mcp/build/index.js"],
-  "env": {
-    "MCP_TRANSPORT": "stdio",
-    "WS_URL": "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID",
-    "WS_USER": "${env:HELIUM_USER}",
-    "WS_PASSWORD": "${env:HELIUM_PASSWORD}"
-  },
-  "envFile": "${workspaceFolder}/.env"
+{
+  "mcpServers": {
+    "helium-logs": {
+      "command": "node",
+      "args": ["${workspaceFolder}/node_modules/helium-rapid-websocket-mcp/build/index.js"],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "WS_URL": "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID",
+        "WS_USER": "${env:HELIUM_USER}",
+        "WS_PASSWORD": "${env:HELIUM_PASSWORD}",
+        "OUTPUT_TO_CURSOR_DEBUG_LOG": "true",
+        "DEBUG_LOG_FILE": "${workspaceFolder}/.cursor/debug.log"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    }
+  }
 }
 ```
+
+**Testing from source** (cloned repo, after `npm run build`):
+
+```json
+{
+  "mcpServers": {
+    "helium-logs": {
+      "command": "node",
+      "args": ["${workspaceFolder}/build/index.js"],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "WS_URL": "${env:WS_URL}",
+        "WS_USER": "${env:HELIUM_USER}",
+        "WS_PASSWORD": "${env:HELIUM_PASSWORD}",
+        "OUTPUT_TO_CURSOR_DEBUG_LOG": "true",
+        "DEBUG_LOG_FILE": "${workspaceFolder}/.cursor/debug.log"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    }
+  }
+}
+```
+
+`OUTPUT_TO_CURSOR_DEBUG_LOG` and `DEBUG_LOG_FILE` are optional; omit them or set `OUTPUT_TO_CURSOR_DEBUG_LOG` to `"false"` to disable piping logs to a file.
 
 3. Create a `.env` file (see [Configuration](#configuration-credentials-and-websocket-url)) with `HELIUM_USER`, `HELIUM_PASSWORD`, and optionally `WS_URL`, or set those variables in your shell.
 4. Restart Cursor or reload MCP servers.
@@ -223,8 +259,12 @@ Configure the WebSocket URL and credentials in `mcp.json` so Cursor spawns the s
 Example `mcp.json` entry (server must be running with env vars set):
 
 ```json
-"websocket-logs": {
-  "url": "http://127.0.0.1:3000/mcp"
+{
+  "mcpServers": {
+    "websocket-logs": {
+      "url": "http://127.0.0.1:3000/mcp"
+    }
+  }
 }
 ```
 
@@ -246,3 +286,4 @@ npm start
 
 - Do **not** commit credentials or scripts that contain them. Use environment variables or a local wrapper that is not in version control.
 - Keep `WS_USER` / `WS_PASSWORD` or `WS_AUTH` only in your environment or in a secure, uncommitted script.
+- Do not commit `.env` or `.cursor/mcp.json`; both are gitignored in this repo.

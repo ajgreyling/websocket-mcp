@@ -2,3 +2,4 @@ node_modules/
 build/
 .env
 .cursor/mcp.json
+.cursor/debug.log
