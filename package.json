@@ -4,10 +4,19 @@
   "description": "MCP server that streams Helium WebSocket logs to Cursor for debugging",
   "type": "module",
   "main": "build/index.js",
+  "bin": {
+    "websocket-mcp": "./build/index.js"
+  },
+  "files": [
+    "build",
+    "README.md",
+    ".env.example"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=18"
