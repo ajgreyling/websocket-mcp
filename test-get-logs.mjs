@@ -1,27 +1,21 @@
 #!/usr/bin/env node
+// Run with WS_USER and WS_PASSWORD set in the environment, e.g.:
+//   export WS_USER=your-username WS_PASSWORD=your-password
+//   node test-get-logs.mjs
 import { spawn } from "child_process";
 import { createInterface } from "readline";
-
-// Load .env manually for this test
-import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { dirname } from "path";
 const __dir = dirname(fileURLToPath(import.meta.url));
-try {
-  const env = readFileSync(join(__dir, ".env"), "utf8");
-  for (const line of env.split("\n")) {
-    const m = line.match(/^([^#=]+)=(.*)$/);
-    if (m) process.env[m[1].trim()] = m[2].trim();
-  }
-} catch (_) {}
 
 const env = {
   ...process.env,
   MCP_TRANSPORT: "stdio",
   WS_URL:
+    process.env.WS_URL ||
     "wss://helium.mezzanineware.com/api/ws2/logging?appId=09a1e3ab-6219-4206-99fb-c5c68de47382",
-  WS_USER: process.env.HELIUM_USER,
-  WS_PASSWORD: process.env.HELIUM_PASSWORD,
+  WS_USER: process.env.WS_USER,
+  WS_PASSWORD: process.env.WS_PASSWORD,
 };
 
 const proc = spawn("node", ["build/index.js"], {

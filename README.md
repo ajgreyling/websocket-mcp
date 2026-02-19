@@ -56,7 +56,7 @@ See [Cursor configuration](#cursor-configuration) for full examples.
 
 ## Configuration: credentials and WebSocket URL
 
-The server requires three values. Set them via environment variables or a `.env` file.
+The server expects configuration from the MCP server config only. Set `WS_URL`, `WS_USER`, and `WS_PASSWORD` (or `WS_AUTH`) in the `env` block of `.cursor/mcp.json`. Cursor passes these into the process when it spawns the server.
 
 | Variable                     | Required | Description                                                                 |
 | ---------------------------- | -------- | --------------------------------------------------------------------------- |
@@ -70,41 +70,7 @@ The server requires three values. Set them via environment variables or a `.env`
 
 **Alternative:** Use `WS_AUTH=username:password` instead of `WS_USER` and `WS_PASSWORD`.
 
-### Using a `.env` file
-
-Create a `.env` file in the project root (or workspace root when using Cursor):
-
-```
-WS_URL=wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID
-WS_USER=your-username
-WS_PASSWORD=your-password
-```
-
-Or with `WS_AUTH`:
-
-```
-WS_URL=wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID
-WS_AUTH=username:password
-```
-
-Add `.env` to `.gitignore` so credentials are never committed. A `.env.example` template is included in the repo. When cloning this repo for development, `.cursor/mcp.json` is also gitignored so local config stays private.
-
-### Using environment variables
-
-If you prefer not to use a file, export in your shell or `mcp.json`:
-
-```bash
-export WS_URL="wss://helium.mezzanineware.com/api/ws2/logging?appId=..."
-export WS_USER="your-username"
-export WS_PASSWORD="your-password"
-```
-
-For `mcp.json`, use Cursor’s interpolation so credentials stay out of the config file:
-
-- `"WS_USER": "${env:HELIUM_USER}"` — reads from your shell or `.env` loaded by Cursor
-- `"WS_PASSWORD": "${env:HELIUM_PASSWORD}"` — same
-
-Then set `HELIUM_USER` and `HELIUM_PASSWORD` in your environment, or use `envFile` in `mcp.json` to load a `.env` that defines them.
+You can use literal values in `mcp.json` or Cursor’s interpolation (e.g. `"WS_USER": "${env:HELIUM_USER}"`) to read from your shell environment. Do not commit `mcp.json` if it contains secrets; it is gitignored in this repo.
 
 ### Output to Cursor Debug log
 
@@ -119,8 +85,8 @@ Example `mcp.json` env block:
 "env": {
   "MCP_TRANSPORT": "stdio",
   "WS_URL": "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID",
-  "WS_USER": "${env:HELIUM_USER}",
-  "WS_PASSWORD": "${env:HELIUM_PASSWORD}",
+  "WS_USER": "your-username",
+  "WS_PASSWORD": "your-password",
   "OUTPUT_TO_CURSOR_DEBUG_LOG": "true",
   "DEBUG_LOG_FILE": "${workspaceFolder}/.cursor/debug.log"
 }
@@ -142,10 +108,7 @@ Connection lifecycle events (open, close, error) are also written. Non-JSON or m
    npm install
    ```
 
-2. **Set configuration** (see [Configuration](#configuration-credentials-and-websocket-url) above)
-
-   - Use a `.env` file, or
-   - Export `WS_URL`, `WS_USER`, and `WS_PASSWORD` (or `WS_AUTH`)
+2. **Set configuration** (see [Configuration](#configuration-credentials-and-websocket-url) above): set `WS_URL`, `WS_USER`, and `WS_PASSWORD` (or `WS_AUTH`) in `mcp.json` `env`. For SSE mode, export them in your shell when starting the server.
 
 3. **Optional:** Set `PORT` (default: `3000`) for the HTTP server in SSE mode.
 
@@ -167,6 +130,8 @@ Connection lifecycle events (open, close, error) are also written. Non-JSON or m
    npm run dev
    ```
 
+   To run the test script (`node test-get-logs.mjs`), set `WS_USER` and `WS_PASSWORD` in your environment (e.g. `export WS_USER=... WS_PASSWORD=...`).
+
 ## Cursor configuration
 
 ### Option A: stdio (config in mcp.json)
@@ -187,12 +152,11 @@ Configure the WebSocket URL and credentials in `mcp.json` so Cursor spawns the s
       "env": {
         "MCP_TRANSPORT": "stdio",
         "WS_URL": "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID",
-        "WS_USER": "${env:HELIUM_USER}",
-        "WS_PASSWORD": "${env:HELIUM_PASSWORD}",
+        "WS_USER": "your-username",
+        "WS_PASSWORD": "your-password",
         "OUTPUT_TO_CURSOR_DEBUG_LOG": "true",
         "DEBUG_LOG_FILE": "${workspaceFolder}/.cursor/debug.log"
-      },
-      "envFile": "${workspaceFolder}/.env"
+      }
     }
   }
 }
@@ -209,12 +173,11 @@ Configure the WebSocket URL and credentials in `mcp.json` so Cursor spawns the s
       "env": {
         "MCP_TRANSPORT": "stdio",
         "WS_URL": "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID",
-        "WS_USER": "${env:HELIUM_USER}",
-        "WS_PASSWORD": "${env:HELIUM_PASSWORD}",
+        "WS_USER": "your-username",
+        "WS_PASSWORD": "your-password",
         "OUTPUT_TO_CURSOR_DEBUG_LOG": "true",
         "DEBUG_LOG_FILE": "${workspaceFolder}/.cursor/debug.log"
-      },
-      "envFile": "${workspaceFolder}/.env"
+      }
     }
   }
 }
@@ -230,13 +193,12 @@ Configure the WebSocket URL and credentials in `mcp.json` so Cursor spawns the s
       "args": ["${workspaceFolder}/build/index.js"],
       "env": {
         "MCP_TRANSPORT": "stdio",
-        "WS_URL": "${env:WS_URL}",
-        "WS_USER": "${env:HELIUM_USER}",
-        "WS_PASSWORD": "${env:HELIUM_PASSWORD}",
+        "WS_URL": "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID",
+        "WS_USER": "your-username",
+        "WS_PASSWORD": "your-password",
         "OUTPUT_TO_CURSOR_DEBUG_LOG": "true",
         "DEBUG_LOG_FILE": "${workspaceFolder}/.cursor/debug.log"
-      },
-      "envFile": "${workspaceFolder}/.env"
+      }
     }
   }
 }
@@ -244,8 +206,7 @@ Configure the WebSocket URL and credentials in `mcp.json` so Cursor spawns the s
 
 `OUTPUT_TO_CURSOR_DEBUG_LOG` and `DEBUG_LOG_FILE` are optional; omit them or set `OUTPUT_TO_CURSOR_DEBUG_LOG` to `"false"` to disable piping logs to a file.
 
-3. Create a `.env` file (see [Configuration](#configuration-credentials-and-websocket-url)) with `HELIUM_USER`, `HELIUM_PASSWORD`, and optionally `WS_URL`, or set those variables in your shell.
-4. Restart Cursor or reload MCP servers.
+3. Restart Cursor or reload MCP servers.
 
 ### Option B: SSE (standalone HTTP server)
 
@@ -284,6 +245,4 @@ npm start
 
 ## Security
 
-- Do **not** commit credentials or scripts that contain them. Use environment variables or a local wrapper that is not in version control.
-- Keep `WS_USER` / `WS_PASSWORD` or `WS_AUTH` only in your environment or in a secure, uncommitted script.
-- Do not commit `.env` or `.cursor/mcp.json`; both are gitignored in this repo.
+- Do **not** commit credentials. Set `WS_USER` and `WS_PASSWORD` (or `WS_AUTH`) only in your `mcp.json` or, if using `${env:...}` interpolation, in your shell environment. Do not commit `mcp.json` if it contains secrets; it is gitignored in this repo.

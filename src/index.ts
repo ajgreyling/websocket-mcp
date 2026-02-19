@@ -29,7 +29,7 @@ function getAuth(): { user: string; password: string } {
   const user = process.env.WS_USER;
   const password = process.env.WS_PASSWORD;
   if (!user || !password) {
-    console.error("Set WS_USER and WS_PASSWORD, or WS_AUTH=username:password");
+    console.error("Set WS_USER and WS_PASSWORD in mcp.json env, or WS_AUTH=username:password");
     process.exit(1);
   }
   return { user, password };
@@ -166,7 +166,7 @@ function startReconnectingWs(
 function getWsUrl(): string {
   const url = process.env.WS_URL;
   if (!url) {
-    console.error("Set WS_URL to the WebSocket endpoint (e.g. wss://host/path?appId=...)");
+    console.error("Set WS_URL in mcp.json env to the WebSocket endpoint (e.g. wss://host/path?appId=...)");
     process.exit(1);
   }
   return url;

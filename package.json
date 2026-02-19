@@ -1,6 +1,6 @@
 {
   "name": "helium-rapid-websocket-mcp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "MCP server that streams Helium WebSocket logs to Cursor for debugging",
   "type": "module",
   "main": "build/index.js",
@@ -9,8 +9,7 @@
   },
   "files": [
     "build",
-    "README.md",
-    ".env.example"
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",
