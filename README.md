@@ -92,10 +92,10 @@ Example `mcp.json` env block:
 }
 ```
 
-Log messages in Helium JSON format are parsed and written as: `{ISO timestamp} - {LEVEL} - {message}`. For example:
+Log messages in Helium JSON format are parsed and written as: `{local timestamp} - {LEVEL} - {message}`. Timestamps use the system's local timezone. For example:
 
 ```
-2026-02-13T10:45:18.651Z - WARN - WaterMapCurrent:feature groups fallback for layer=vw_geo_wa_pipe_full
+2026-02-13T12:45:18.651+02:00 - WARN - WaterMapCurrent:feature groups fallback for layer=vw_geo_wa_pipe_full
 ```
 
 Connection lifecycle events (open, close, error) are also written. Non-JSON or malformed messages are written unchanged.
@@ -241,7 +241,51 @@ npm start
 ## Usage in Cursor
 
 - **Resource:** In the MCP / context UI, open the resource **WebSocket logs** (`ws-log://logs`). Subscribe to it so Cursor refreshes when new log lines arrive.
-- **Tool:** The agent can call **get_ws_logs** to fetch recent log content. Optional argument: `lines` (number) to return only the last N lines.
+- **Tool:** The agent can call **get_ws_logs** to fetch log entries from the in-memory buffer. All parameters are optional and can be combined:
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `lines` | integer | Return only the last N rows (applied after any time filter) |
+| `from_time` | ISO 8601 string | Return entries at or after this timestamp, e.g. `"2026-03-13T08:00:00+02:00"` |
+| `to_time` | ISO 8601 string | Return entries at or before this timestamp |
+
+Examples:
+- Last 100 entries: `{ "lines": 100 }`
+- Entries between two times: `{ "from_time": "2026-03-13T08:00:00+02:00", "to_time": "2026-03-13T09:00:00+02:00" }`
+- Last 50 entries within a window: `{ "from_time": "2026-03-13T08:00:00+02:00", "lines": 50 }`
+- All buffered entries: `{}` (no arguments)
+
+Output is formatted — Helium JSON entries are rendered as `{timestamp} - {key} - {value}`. Invalid timestamp strings return a structured error.
+
+## Cursor 401 (wscat/terminal works, Cursor gets 401)
+
+When Cursor spawns the MCP, the WebSocket connection can get 401 even though the same credentials work from the terminal. **Workaround: run the server from the terminal** and have Cursor connect via URL:
+
+1. Start the server from a terminal (credentials work there):
+   ```bash
+   cd websocket-mcp
+   ./scripts/start-munic-chat-logs.sh   # for munic-chat (port 3000)
+   # or
+   ./scripts/start-sams-logs.sh          # for sams (port 3001)
+   ```
+2. Keep it running. In `mcp.json` use URL transport:
+   ```json
+   "munic-chat-logs": { "url": "http://127.0.0.1:3000/mcp" }
+   "sams-logs":       { "url": "http://127.0.0.1:3001/mcp" }
+   ```
+3. Restart Cursor.
+
+Override credentials with env: `WS_USER=... WS_PASSWORD=... ./scripts/start-munic-chat-logs.sh`
+
+## Troubleshooting
+
+**`WebSocket error: Unexpected server response: 401`** — The server rejected the credentials. The client sends Basic auth correctly; a 401 means the username/password are not accepted for this endpoint. Verify from the command line:
+
+```bash
+wscat -c "wss://helium.mezzanineware.com/api/ws2/logging?appId=YOUR_APP_ID" --auth "USERNAME:PASSWORD"
+```
+
+If wscat also gets 401, the credentials are wrong or not allowed for the logging API (e.g. different environment, password changed, or API access not granted). Confirm with your Helium/Mezzanine admin or the [Helium Logging Service](https://mezzaninewiki.atlassian.net/wiki/spaces/HTUT/pages/5741051/Helium+Logging+Service) docs.
 
 ## Security
 

@@ -1,0 +1,49 @@
+---
+description: TypeScript coding patterns for the MCP server
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# TypeScript Patterns
+
+## Module Style
+
+- ES module imports with explicit `.js` extensions for local files (NodeNext resolution).
+- SDK imports use full subpath: `@modelcontextprotocol/sdk/server/mcp.js`, etc.
+- Use `import type` for type-only imports (e.g. `import type { Request, Response } from "express"`).
+
+## Timestamp Formatting
+
+Use `formatLocalTimestamp(new Date())` for all timestamps. Never use `.toISOString()` — it outputs UTC which is 2 hours behind SA time.
+
+```typescript
+// Correct
+const ts = formatLocalTimestamp(new Date(millis));
+
+// Wrong — produces UTC "Z" suffix
+const ts = new Date(millis).toISOString();
+```
+
+## MCP Registration
+
+- Resources registered with `mcp.registerResource()`, tools with `mcp.registerTool()`.
+- Tool input schemas use `zod` — keep validation inline in the registration call.
+- Return `{ content: [...], isError: true }` for user-facing validation errors (e.g. unparseable timestamps) rather than throwing.
+
+## Log Filtering Helpers
+
+`extractLineTimestamp(line)` derives a `Date` from any buffered line:
+- Bracketed status lines: `/^\[(\d{4}-\d{2}-\d{2}T[\d:.+-]+)\]/`
+- Helium JSON lines: parse `millis` field after stripping the leading `< ` prefix
+
+`getLogsFiltered({ last?, fromTime?, toTime? })` filters `logLines`, slices the tail, then maps each line through `formatHeliumLogMessage`. Use this (not `getLogsText`) whenever time filtering or formatted output is needed.
+
+## Error Handling
+
+- WebSocket errors append to the log buffer and write to the debug file.
+- Use `catch { /* fall through */ }` only for expected parse failures (e.g. non-JSON messages).
+- For async MCP operations, use `.catch(() => {})` to swallow notification failures that don't affect correctness.
+
+## Environment Access
+
+Config priority: `process.env` → CLI args → `WS_AUTH` fallback. Keep this layered approach when adding new config.

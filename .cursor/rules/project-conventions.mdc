@@ -1,0 +1,48 @@
+---
+description: Project architecture and conventions for helium-rapid-websocket-mcp
+alwaysApply: true
+---
+
+# Project Conventions
+
+## Overview
+
+Single-file MCP server (`src/index.ts`) that bridges a Helium logging WebSocket to Cursor via the Model Context Protocol. Published as `helium-rapid-websocket-mcp` on npm.
+
+## Architecture
+
+- **Two transports:** stdio (Cursor spawns the process) and SSE (standalone HTTP server).
+- **Single source file:** all server logic lives in `src/index.ts`. Keep it that way unless there's a strong reason to split.
+- **Log buffer:** in-memory ring buffer capped at `MAX_LOG_LINES` (10 000). Exposed as an MCP resource (`ws-log://logs`) and the `get_ws_logs` tool. Raw WebSocket data is stored; `formatHeliumLogMessage` is applied at read time.
+- **Reconnection:** exponential backoff from 1 s to 30 s on WebSocket close.
+
+## Timestamps
+
+All timestamps use the **system's local timezone** with an explicit UTC offset, not UTC/ISO `Z` suffix. Use `formatLocalTimestamp(date)` for any new timestamp formatting. Example output: `2026-02-13T12:45:18.651+02:00`.
+
+## MCP Tools
+
+### `get_ws_logs`
+
+Returns formatted log entries from the in-memory ring buffer. All parameters are optional and combinable:
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `lines` | integer | Last N rows after filtering (default: all) |
+| `from_time` | ISO 8601 string | Entries at or after this time |
+| `to_time` | ISO 8601 string | Entries at or before this time |
+
+Time filtering is implemented in `getLogsFiltered()` using `extractLineTimestamp()`, which parses timestamps from both bracketed status lines (`[…]`) and Helium JSON `millis` fields. Invalid `from_time`/`to_time` values return `isError: true`.
+
+## Configuration & Secrets
+
+- Credentials come from `mcp.json` env, CLI args, or shell env (`WS_URL`, `WS_USER`, `WS_PASSWORD`).
+- Never commit secrets. `.cursor/mcp.json`, `.env`, and `.env.mcp` are gitignored.
+- `scripts/*.sh` may contain default credentials for local dev — do not commit real passwords.
+
+## Build & Run
+
+- ES modules (`"type": "module"`), TypeScript strict mode, target ES2022.
+- `npm run build` → `tsc` → `build/`.
+- `npm run dev` → `tsx src/index.ts` (no build step).
+- `npm start` → `node build/index.js`.
